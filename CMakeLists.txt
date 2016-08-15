@@ -1,11 +1,13 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.12)
 
 project(tiny-process-library)
 
+#######
+include(CheckCXXCompilerFlag)
 if(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wno-unused-parameter")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wno-unused-parameter ")
 endif()
 
 find_package(Threads REQUIRED)
@@ -22,11 +24,23 @@ else()
   list(APPEND process_source_files process_unix.cpp)
 endif()
 
-add_library(tiny-process-library ${process_source_files})
-#add_executable(examples examples.cpp)
+set(LIB_OLD ${PROJECT_NAME}.oldcxx11abi)
+set(LIB_NEW ${PROJECT_NAME}.newcxx11abi)
 
-target_link_libraries(tiny-process-library ${CMAKE_THREAD_LIBS_INIT})
-#target_link_libraries(examples tiny-process-library)
+CHECK_CXX_COMPILER_FLAG(--disable-libstdcxx-dual-abi SUPPORT_DUAL_ABI)
+
+add_library(${LIB_OLD} ${process_source_files})
+target_link_libraries(${LIB_OLD} ${CMAKE_THREAD_LIBS_INIT})
+target_compile_options(${LIB_OLD} PRIVATE "-D_GLIBCXX_USE_CXX11_ABI=0")
+
+if (SUPPORT_DUAL_ABI)
+  message(STATUS "building old+new cxx11 abi versions")
+  add_library(${LIB_NEW} ${process_source_files})
+  target_link_libraries(${LIB_NEW} ${CMAKE_THREAD_LIBS_INIT})
+  target_compile_options(${LIB_NEW} PRIVATE "-D_GLIBCXX_USE_CXX11_ABI=1")
+else()
+  message(STATUS "building old cxx11 abi version")
+endif()
 
 # To enable tests: cmake -DENABLE_TESTING=1 .
 if(ENABLE_TESTING)
