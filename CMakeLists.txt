@@ -23,10 +23,10 @@ else()
 endif()
 
 add_library(tiny-process-library ${process_source_files})
-add_executable(examples examples.cpp)
+#add_executable(examples examples.cpp)
 
 target_link_libraries(tiny-process-library ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(examples tiny-process-library)
+#target_link_libraries(examples tiny-process-library)
 
 # To enable tests: cmake -DENABLE_TESTING=1 .
 if(ENABLE_TESTING)

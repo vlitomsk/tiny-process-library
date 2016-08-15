@@ -7,8 +7,11 @@
 #include <mutex>
 #include <thread>
 #include <memory>
+#include <algorithm>
+#include <list>
 #ifndef _WIN32
 #include <sys/wait.h>
+#include <sys/prctl.h>
 #endif
 
 ///Create a new process given command and run path.
@@ -42,6 +45,7 @@ private:
   };
 public:
   Process(const string_type &command, const string_type &path=string_type(),
+          std::function<void (int)> process_finished=nullptr,
           std::function<void(const char *bytes, size_t n)> read_stdout=nullptr,
           std::function<void(const char *bytes, size_t n)> read_stderr=nullptr,
           bool open_stdin=false,
@@ -63,11 +67,12 @@ public:
   void kill(bool force=false);
   ///Kill a given process id. Use kill(bool force) instead if possible.
   static void kill(id_type id, bool force=false);
-  
+
 private:
   Data data;
   bool closed;
   std::mutex close_mutex;
+  std::function<void (int)> process_finished;
   std::function<void(const char* bytes, size_t n)> read_stdout;
   std::function<void(const char* bytes, size_t n)> read_stderr;
   std::thread stdout_thread, stderr_thread;
@@ -80,6 +85,10 @@ private:
   id_type open(const string_type &command, const string_type &path);
   void async_read();
   void close_fds();
+
+  static std::list<Process*> instances;
+  static void callHandlers (int signum);
+  void sigHandler(int signum);
 };
 
 #endif  // TINY_PROCESS_LIBRARY_HPP_

@@ -40,7 +40,7 @@ Process::id_type Process::open(const std::string &command, const std::string &pa
     if(stderr_fd) {close(stderr_p[0]);close(stderr_p[1]);}
     return pid;
   }
-  else if (pid == 0) {
+  else if (pid == 0) {  
     if(stdin_fd) dup2(stdin_p[0], 0);
     if(stdout_fd) dup2(stdout_p[1], 1);
     if(stderr_fd) dup2(stderr_p[1], 2);
@@ -53,7 +53,8 @@ Process::id_type Process::open(const std::string &command, const std::string &pa
     for(int fd=3;fd<fd_max;fd++)
       close(fd);
 
-    setpgid(0, 0);
+    prctl(PR_SET_PDEATHSIG, SIGTERM);
+    //setpgid(0, 0);
     //TODO: See here on how to emulate tty for colors: http://stackoverflow.com/questions/1401002/trick-an-application-into-thinking-its-stdin-is-interactive-not-a-pipe
     //TODO: One solution is: echo "command;exit"|script -q /dev/null
     
@@ -72,6 +73,8 @@ Process::id_type Process::open(const std::string &command, const std::string &pa
     
     _exit(EXIT_FAILURE);
   }
+
+  signal(SIGCHLD, &Process::callHandlers);
 
   if(stdin_fd) close(stdin_p[0]);
   if(stdout_fd) close(stdout_p[1]);
@@ -183,4 +186,17 @@ void Process::kill(id_type id, bool force) {
     ::kill(-id, SIGTERM);
   else
     ::kill(-id, SIGINT);
+}
+
+void Process::callHandlers (int signum) {
+    std::for_each(instances.begin(), instances.end(),
+                  std::bind2nd(std::mem_fun(&Process::sigHandler), signum));
+}
+
+void Process::sigHandler(int signum) {
+    if (signum == SIGCHLD) {
+        int exit_status;
+        waitpid(data.id, &exit_status, 0);
+        process_finished(exit_status);
+    }
 }

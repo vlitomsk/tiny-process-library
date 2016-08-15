@@ -70,7 +70,7 @@ int main() {
   cout << endl << "Example 6 - run bash with input from stdin" << endl;
   Process process6("bash", "", [](const char *bytes, size_t n) {
     cout << "Output from stdout: " << std::string(bytes, n);
-  }, nullptr, true);
+  }, nullptr, nullptr, true);
   process6.write("echo Hello from bash\n");
   process6.write("exit\n");
   exit_status=process6.get_exit_status();
@@ -81,7 +81,7 @@ int main() {
   cout << endl << "Example 7 - send data to cat through stdin" << endl;
   Process process7("cat", "", [](const char *bytes, size_t n) {
     cout << "Output from stdout: " << std::string(bytes, n);
-  }, nullptr, true);
+  }, nullptr, nullptr, true);
   process7.write("Hello cat\n");
   process7.close_stdin();
   exit_status=process7.get_exit_status();
