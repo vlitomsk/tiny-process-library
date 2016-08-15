@@ -27,20 +27,14 @@ endif()
 set(LIB_OLD ${PROJECT_NAME}.oldcxx11abi)
 set(LIB_NEW ${PROJECT_NAME}.newcxx11abi)
 
-CHECK_CXX_COMPILER_FLAG(--disable-libstdcxx-dual-abi SUPPORT_DUAL_ABI)
-
 add_library(${LIB_OLD} ${process_source_files})
 target_link_libraries(${LIB_OLD} ${CMAKE_THREAD_LIBS_INIT})
 target_compile_options(${LIB_OLD} PRIVATE "-D_GLIBCXX_USE_CXX11_ABI=0")
 
-if (SUPPORT_DUAL_ABI)
-  message(STATUS "building old+new cxx11 abi versions")
-  add_library(${LIB_NEW} ${process_source_files})
-  target_link_libraries(${LIB_NEW} ${CMAKE_THREAD_LIBS_INIT})
-  target_compile_options(${LIB_NEW} PRIVATE "-D_GLIBCXX_USE_CXX11_ABI=1")
-else()
-  message(STATUS "building old cxx11 abi version")
-endif()
+message(STATUS "building old+new cxx11 abi versions")
+add_library(${LIB_NEW} ${process_source_files})
+target_link_libraries(${LIB_NEW} ${CMAKE_THREAD_LIBS_INIT})
+target_compile_options(${LIB_NEW} PRIVATE "-D_GLIBCXX_USE_CXX11_ABI=1")
 
 # To enable tests: cmake -DENABLE_TESTING=1 .
 if(ENABLE_TESTING)
